@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using Core.Entities;
-using Core.Models.Response;
+using Core.Models.Users;
 
 namespace Infrastructure.Mapping
 {

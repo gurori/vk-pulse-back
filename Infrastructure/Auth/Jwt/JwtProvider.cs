@@ -3,8 +3,6 @@ using System.Security.Claims;
 using System.Text;
 using Application.Interfaces.Auth;
 using Application.Interfaces.Repositories;
-using Core.Models;
-using Core.Models.Users;
 using Core.Structs;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;

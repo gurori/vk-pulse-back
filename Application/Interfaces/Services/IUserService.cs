@@ -1,4 +1,4 @@
-using Core.Models.Response;
+using Core.Models.Users;
 
 namespace Application.Interfaces.Services
 {

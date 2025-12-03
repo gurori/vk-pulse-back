@@ -4,7 +4,7 @@ using Application.Interfaces.Services;
 using AutoMapper;
 using Core.Entities;
 using Core.Exceptions;
-using Core.Models.Response;
+using Core.Models.Users;
 using Core.Structs;
 using Microsoft.IdentityModel.Tokens;
 
