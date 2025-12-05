@@ -1,88 +1,106 @@
-using Application.Interfaces.Repositories;
-using Core.Entities;
-using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore; 
+using Core.Entities; 
+using DataAccess.Data;
 
 namespace DataAccess.Repositories
 {
-    public class UserRepository(AppDbContext context) : IUserRepository
+    public interface IUserRepository
+    {
+        Task<IEnumerable<UserEntity>> GetAllAsync();
+        Task<UserEntity?> GetByEmailAsync(string email);
+        Task<UserEntity?> GetByIdAsync(Guid id); 
+        Task<IEnumerable<UserEntity>> GetManyByIdAsync(IEnumerable<Guid> ids); 
+        Task<string?> GetRoleByIdAsync(Guid id); 
+        Task UpdateAsync(Guid id, string name);
+        Task DeleteByIdAsync(Guid id); 
+    }
+
+    public class UserRepository : IUserRepository
     {
         private readonly AppDbContext _context = context;
 
-        public async Task<bool> TryCreateAsync(
-            string name,
-            string email,
-            string passwordHash,
-            string role
-        )
+        public UserRepository(AppDbContext context)
         {
-            bool isUserExist = await _context.Users.AsNoTracking().AnyAsync(u => u.Email == email);
+            _context = context;
+        }
 
-            if (isUserExist)
-                return false;
-
-            var userEntity = new UserEntity()
-            {
-                Role = role,
-                Email = email,
-                Name = name,
-                PasswordHash = passwordHash,
-            };
-
-            await _context.Users.AddAsync(userEntity);
-            await _context.SaveChangesAsync();
-            return true;
+        public async Task<IEnumerable<UserEntity>> GetAllAsync()
+        {
+            return await _context.Users
+                                 .Include(u => u.Team) // Включаем связанную команду
+                                 .Include(u => u.Position) // Включаем связанную позицию
+                                 .Include(u => u.CompletedTasks) // Включаем завершенные задачи
+                                 .Include(u => u.InProcessTasks) // Включаем задачи в процессе
+                                 .AsNoTracking()
+                                 .ToListAsync();
         }
 
         public async Task<UserEntity?> GetByEmailAsync(string email)
         {
             return await _context
-                .Users.AsNoTracking()
+                .Users
+                .Include(u => u.Team)
+                .Include(u => u.Position)
+                .Include(u => u.CompletedTasks) 
+                .Include(u => u.InProcessTasks) 
+                .AsNoTracking()
                 .Where(u => u.Email == email)
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<UserEntity?> GetByIdAsync(string id)
+        public async Task<UserEntity?> GetByIdAsync(Guid id) 
         {
-            return await _context.Users.AsNoTracking().Where(u => u.Id == id).FirstOrDefaultAsync();
+            return await _context.Users
+                                 .Include(u => u.Team) 
+                                 .Include(u => u.Position) 
+                                 .Include(u => u.CompletedTasks) 
+                                 .Include(u => u.InProcessTasks) 
+                                 .AsNoTracking()
+                                 .FirstOrDefaultAsync(u => u.Id == id); // Используем Guid для сравнения
         }
 
-        public async Task<IEnumerable<UserEntity>> GetManyByIdAsync(IEnumerable<string> ids)
+        public async Task<IEnumerable<UserEntity>> GetManyByIdAsync(IEnumerable<Guid> ids)
         {
             var userEntities = await _context
-                .Users.AsNoTracking()
-                .Where(u => ids.Contains(u.Id))
+                .Users
+                .Include(u => u.Team) 
+                .Include(u => u.Position) 
+                .Include(u => u.CompletedTasks) 
+                .Include(u => u.InProcessTasks) 
+                .AsNoTracking()
+                .Where(u => ids.Contains(u.Id)) // Используем Guid для сравнения
                 .ToListAsync();
 
             return userEntities;
         }
 
-        public async Task<string?> GetRoleByIdAsync(string id)
+        public async Task<string?> GetRoleByIdAsync(Guid id) 
         {
             return await _context
                 .Users.AsNoTracking()
-                .Where(u => u.Id == id)
+                .Where(u => u.Id == id) // Используем Guid для сравнения
                 .Select(u => u.Role)
                 .FirstOrDefaultAsync();
         }
 
-        public async Task UpdateAsync(string id, string name)
+        public async Task UpdateAsync(Guid id, string name)
         {
             await _context
-                .Users.Where(u => u.Id == id)
+                .Users.Where(u => u.Id == id) // Используем Guid для сравнения
                 .ExecuteUpdateAsync(s =>
                     s.SetProperty(u => u.Name, u => name)
-                // .SetProperty(u => u.FirstName, u => firstName)
-                // .SetProperty(u => u.MiddleName, u => middleName)
-                // .SetProperty(u => u.Description, u => description)
-                // .SetProperty(u => u.JobTitle, u => jobTitle)
                 );
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(); 
         }
 
-        public async Task DeleteByIdAsync(string id)
+        public async Task DeleteByIdAsync(Guid id) 
         {
-            await _context.Users.Where(x => x.Id == id).ExecuteDeleteAsync();
+            await _context.Users.Where(x => x.Id == id).ExecuteDeleteAsync(); // Используем Guid для сравнения
         }
     }
 }

@@ -4,13 +4,14 @@ using Application.Interfaces.Services;
 using Application.Services;
 using DataAccess;
 using DataAccess.Repositories;
-using Infastructure.Auth;
+using Infrastructure.Auth;
 using Infrastructure.Auth;
 using Infrastructure.Mapping;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.EntityFrameworkCore;
 using Server.Controllers;
 using Server.Extensions;
+using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,7 +48,7 @@ services.AddScoped<IUserService, UserService>();
 services.AddScoped<IJwtProvider, JwtProvider>();
 services.AddScoped<IPasswordHasher, PasswordHasher>();
 
-services.AddAutoMapper(typeof(UserAutoMapperProfile));
+services.AddAutoMapper(typeof(UserAutoMapperProfile).Assembly);
 
 services.AddAuthentication(configuration);
 
