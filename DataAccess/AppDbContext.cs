@@ -12,6 +12,9 @@ namespace DataAccess
     {
         public DbSet<UserEntity> Users { get; set; }
         public DbSet<RoleEntity> Roles { get; set; }
+        public DbSet<TaskEntity> Tasks { get; set; }
+        public DbSet<TeamEntity> Teams { get; set; }
+        public DbSet<PositionEntity> Positions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

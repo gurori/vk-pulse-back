@@ -1,7 +1,10 @@
-namespace Core.Entities
+using Core.Models.Users;
+
+namespace Core.Models.Tasks
 {
-    public sealed class TaskEntity : BaseEntity
+    public sealed class TaskResponse
     {
+        public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public bool IsCompleted { get; set; }
@@ -11,6 +14,6 @@ namespace Core.Entities
         public DateTime ActualStartDate { get; set; }
         public DateTime ActualEndDate { get; set; }
         public string? ReceiverId { get; set; }
-        public UserEntity? Receiver { get; set; }
+        public UserDto? Receiver { get; set; }
     }
 }

@@ -37,19 +37,31 @@ namespace DataAccess.Repositories
         {
             return await _context
                 .Users.AsNoTracking()
+                .Include(x => x.InProcessTasks)
+                .Include(x => x.CompletedTasks)
+                .Include(x => x.Team)
                 .Where(u => u.Email == email)
                 .FirstOrDefaultAsync();
         }
 
         public async Task<UserEntity?> GetByIdAsync(string id)
         {
-            return await _context.Users.AsNoTracking().Where(u => u.Id == id).FirstOrDefaultAsync();
+            return await _context
+                .Users.AsNoTracking()
+                .Include(x => x.InProcessTasks)
+                .Include(x => x.CompletedTasks)
+                .Include(x => x.Team)
+                .Where(u => u.Id == id)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<UserEntity>> GetManyByIdAsync(IEnumerable<string> ids)
         {
             var userEntities = await _context
                 .Users.AsNoTracking()
+                .Include(x => x.InProcessTasks)
+                .Include(x => x.CompletedTasks)
+                .Include(x => x.Team)
                 .Where(u => ids.Contains(u.Id))
                 .ToListAsync();
 

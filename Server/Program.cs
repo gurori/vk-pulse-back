@@ -27,7 +27,7 @@ services.AddCors(option =>
 {
     option.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("https://localhost:3000/");
+        policy.WithOrigins("http://localhost:3000");
         policy.AllowCredentials();
         policy.AllowAnyHeader();
         policy.AllowAnyMethod();
@@ -39,9 +39,11 @@ services.AddCors(option =>
 // Repositoties
 services.AddScoped<IRoleRepository, RoleRepository>();
 services.AddScoped<IUserRepository, UserRepository>();
+services.AddScoped<ITasksRepository, TasksRepository>();
 
 // Services
 services.AddScoped<IUserService, UserService>();
+services.AddScoped<TaskService>();
 
 // Auth
 services.AddScoped<IJwtProvider, JwtProvider>();
@@ -71,8 +73,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseHttpsRedirection();
+else
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCookiePolicy(
     new CookiePolicyOptions
