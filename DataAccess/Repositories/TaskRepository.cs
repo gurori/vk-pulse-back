@@ -1,6 +1,13 @@
+// DataAccess/Repositories/TasksRepository.cs
 using Application.Interfaces.Repositories;
 using Core.Entities;
+using DataAccess;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Ulid;
+using System;
 
 namespace DataAccess.Repositories
 {
@@ -8,36 +15,35 @@ namespace DataAccess.Repositories
     {
         private readonly AppDbContext _db = db;
 
-        /// <summary>
-        /// Создание новой задачи
-        /// </summary>
-        public async Task CreateAsync(string name, string description, int score, DateTime start, DateTime end, string receiverId)
+        public async Task<TaskEntity> CreateAsync(string name, string description, int score, DateTime start, DateTime end, string receiverId)
         {
-            var user = await _db.Users.Include(u => u.InProcessTasks).FirstOrDefaultAsync(u => u.Id == receiverId);
-
-            if (user is null) return;
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == receiverId);
+            if (user is null)
+            {
+                throw new InvalidOperationException($"Receiver user with ID {receiverId} not found.");
+            }
 
             TaskEntity task = new()
             {
+                Id = Ulid.NewUlid().ToString(),
                 Name = name,
                 Description = description,
                 Score = score,
                 StartDate = start,
                 EndDate = end,
-                Receiver = user,
                 ReceiverId = receiverId,
-                IsCompleted = false
+                IsCompleted = false,
+                ActualStartDate = null,
+                ActualEndDate = null,
+                Receiver = user
             };
-
-            user.InProcessTasks = [..user.InProcessTasks, task];
 
             await _db.Tasks.AddAsync(task);
             await _db.SaveChangesAsync();
+
+            return task;
         }
 
-        /// <summary>
-        /// Получение задач по списку идентификаторов
-        /// </summary>
         public async Task<IEnumerable<TaskEntity>> GetByIdsAsync(IEnumerable<string> ids)
         {
             return await _db
@@ -46,20 +52,22 @@ namespace DataAccess.Repositories
                 .ToArrayAsync();
         }
 
-        /// <summary>
-        /// Пометить задачу как выполненную
-        /// </summary>
+        public async Task<IEnumerable<TaskEntity>> GetByUserIdAsync(string id)
+        {
+            return await _db.Tasks
+                .Include(t => t.Receiver)
+                .Where(t => t.ReceiverId == id)
+                .OrderBy(t => t.StartDate)
+                .ToListAsync();
+        }
+
         public async Task CompleteAsync(string id)
         {
             var task = await _db.Tasks.FirstOrDefaultAsync(t => t.Id == id);
+            if (task is null || task.IsCompleted) return;
 
-            if (task is null)
-                return;
-
-            var user = await _db.Users.FirstOrDefaultAsync(t => t.Id == task.ReceiverId);
-
-            if (user is null)
-                return;
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == task.ReceiverId);
+            if (user is null) return;
 
             task.IsCompleted = true;
             task.ActualEndDate = DateTime.UtcNow;
@@ -69,21 +77,27 @@ namespace DataAccess.Repositories
             await _db.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<TaskEntity>> GetByUserIdAsync(string id)
+        public async Task UpdateAsync(TaskEntity task)
         {
-            var inProcessTasks = await _db
-                .Users.AsNoTracking()
-                .Where(u => u.Id == id)
-                .Select(u => u.InProcessTasks)
-                .FirstOrDefaultAsync() ?? [];
+            _db.Tasks.Update(task);
+            await _db.SaveChangesAsync();
+        }
 
-            var completedTasks = await _db
-                .Users.AsNoTracking()
-                .Where(u => u.Id == id)
-                .Select(u => u.CompletedTasks)
-                .FirstOrDefaultAsync() ?? [];
+        public async Task DeleteAsync(string taskId)
+        {
+            var taskToDelete = await _db.Tasks.FindAsync(taskId);
+            if (taskToDelete != null)
+            {
+                _db.Tasks.Remove(taskToDelete);
+                await _db.SaveChangesAsync();
+            }
+        }
 
-            return [.. completedTasks!, .. inProcessTasks!];
+        public async Task<TaskEntity?> GetByIdAndReceiverIdAsync(string taskId, string receiverId)
+        {
+            return await _db.Tasks
+                .Include(t => t.Receiver)
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.ReceiverId == receiverId);
         }
     }
 }

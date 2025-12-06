@@ -1,100 +1,99 @@
+// DataAccess/Repositories/UserRepository.cs
 using Application.Interfaces.Repositories;
 using Core.Entities;
+using DataAccess;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
+using System.Linq;
+using Ulid;
+using System.Collections.Generic;
 
 namespace DataAccess.Repositories
 {
-    public class UserRepository(AppDbContext context) : IUserRepository
+    public class UserRepository : IUserRepository
     {
-        private readonly AppDbContext _context = context;
+        private readonly AppDbContext _context;
 
-        public async Task<bool> TryCreateAsync(
-            string name,
-            string email,
-            string passwordHash,
-            string role
-        )
+        public UserRepository(AppDbContext context)
         {
-            bool isUserExist = await _context.Users.AsNoTracking().AnyAsync(u => u.Email == email);
+            _context = context;
+        }
 
-            if (isUserExist)
-                return false;
-
-            var userEntity = new UserEntity()
+        public async Task<bool> TryCreateAsync(string name, string email, string passwordHash, string role)
+        {
+            var existingUser = await _context.Users.AnyAsync(u => u.Email == email);
+            if (existingUser)
             {
-                Role = role,
-                Email = email,
+                return false;
+            }
+
+            var user = new UserEntity
+            {
+                Id = Ulid.NewUlid().ToString(),
                 Name = name,
+                Email = email,
                 PasswordHash = passwordHash,
+                Role = role,
+                Score = 0
             };
 
-            await _context.Users.AddAsync(userEntity);
+            await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
             return true;
         }
 
         public async Task<UserEntity?> GetByEmailAsync(string email)
         {
-            return await _context
-                .Users.AsNoTracking()
-                .Include(x => x.InProcessTasks)
-                .Include(x => x.CompletedTasks)
-                .Include(x => x.Team)
-                .Where(u => u.Email == email)
-                .FirstOrDefaultAsync();
+            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         }
 
         public async Task<UserEntity?> GetByIdAsync(string id)
         {
-            return await _context
-                .Users.AsNoTracking()
-                .Include(x => x.InProcessTasks)
-                .Include(x => x.CompletedTasks)
-                .Include(x => x.Team)
-                .Where(u => u.Id == id)
-                .FirstOrDefaultAsync();
+            return await _context.Users
+                .Include(u => u.Team)
+                .Include(u => u.Position)
+                .Include(u => u.TasksReceived)
+                    .ThenInclude(t => t.Receiver)
+                .FirstOrDefaultAsync(u => u.Id == id);
         }
 
-        public async Task<IEnumerable<UserEntity>> GetManyByIdAsync(IEnumerable<string> ids)
+        public async Task UpdateAsync(string id, string name)
         {
-            var userEntities = await _context
-                .Users.AsNoTracking()
-                .Include(x => x.InProcessTasks)
-                .Include(x => x.CompletedTasks)
-                .Include(x => x.Team)
-                .Where(u => ids.Contains(u.Id))
-                .ToListAsync();
-
-            return userEntities;
+            var user = await _context.Users.FindAsync(id);
+            if (user != null)
+            {
+                user.Name = name;
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task<string?> GetRoleByIdAsync(string id)
         {
-            return await _context
-                .Users.AsNoTracking()
+            return await _context.Users
                 .Where(u => u.Id == id)
                 .Select(u => u.Role)
                 .FirstOrDefaultAsync();
         }
 
-        public async Task UpdateAsync(string id, string name)
+        public async Task<IEnumerable<UserEntity>> GetManyByIdAsync(IEnumerable<string> ids)
         {
-            await _context
-                .Users.Where(u => u.Id == id)
-                .ExecuteUpdateAsync(s =>
-                    s.SetProperty(u => u.Name, u => name)
-                // .SetProperty(u => u.FirstName, u => firstName)
-                // .SetProperty(u => u.MiddleName, u => middleName)
-                // .SetProperty(u => u.Description, u => description)
-                // .SetProperty(u => u.JobTitle, u => jobTitle)
-                );
-
-            await _context.SaveChangesAsync();
+            return await _context.Users
+                .Include(u => u.Team)
+                .Include(u => u.Position)
+                .Include(u => u.TasksReceived)
+                    .ThenInclude(t => t.Receiver)
+                .Where(u => ids.Contains(u.Id))
+                .ToListAsync();
         }
 
         public async Task DeleteByIdAsync(string id)
         {
-            await _context.Users.Where(x => x.Id == id).ExecuteDeleteAsync();
+            var userToDelete = await _context.Users.FindAsync(id);
+            if (userToDelete != null)
+            {
+                _context.Users.Remove(userToDelete);
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

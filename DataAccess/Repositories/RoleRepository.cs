@@ -1,21 +1,30 @@
+// DataAccess/Repositories/RoleRepository.cs
 using Application.Interfaces.Repositories;
+using Core.Entities;
+using DataAccess;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace DataAccess.Repositories
 {
-    public sealed class RoleRepository(AppDbContext context) : IRoleRepository
+    public class RoleRepository : IRoleRepository
     {
-        private readonly AppDbContext _context = context;
+        private readonly AppDbContext _context;
 
-        public async Task<HashSet<int>> GetPermissionsIdsAsync(string roleName)
+        public RoleRepository(AppDbContext context)
         {
-            var permissions = await _context
-                .Roles.Include(r => r.Permissions)
-                .Where(r => r.Name.ToLower() == roleName.ToLower())
-                .Select(r => r.Permissions)
-                .ToArrayAsync();
+            _context = context;
+        }
 
-            return permissions.SelectMany(p => p).Select(p => p.Id).ToHashSet();
+        public async Task<RoleEntity?> GetByIdAsync(int id)
+        {
+            return await _context.Roles.FindAsync(id);
+        }
+
+        public async Task<IEnumerable<RoleEntity>> GetAllAsync()
+        {
+            return await _context.Roles.ToListAsync();
         }
     }
 }

@@ -1,5 +1,6 @@
+// Infrastructure/Auth/PasswordHasher.cs
 using Application.Interfaces.Auth;
-using static BCrypt.Net.BCrypt;
+using BCrypt.Net;
 
 namespace Infrastructure.Auth
 {
@@ -7,12 +8,12 @@ namespace Infrastructure.Auth
     {
         public string Generate(string password)
         {
-            return EnhancedHashPassword(password);
+            return BCrypt.Net.BCrypt.HashPassword(password);
         }
 
         public bool Verify(string password, string hashedPassword)
         {
-            return EnhancedVerify(password, hashedPassword);
+            return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
         }
     }
 }

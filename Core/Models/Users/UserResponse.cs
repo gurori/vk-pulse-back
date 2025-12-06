@@ -1,17 +1,19 @@
+// Core/Models/Users/UserResponse.cs
 using Core.Models.Tasks;
-using Core.Models.Teams;
+using System.Collections.Generic;
 
 namespace Core.Models.Users
 {
-    public sealed record UserResponse(
-        string Id,
-        string Name,
-        string Email,
-        int Score,
-        string Role,
-        string TeamId,
-        TeamDto Team,
-        IEnumerable<TaskDto> CompletedTasks,
-        IEnumerable<TaskDto> InProcessTasks
-    );
+    public sealed class UserResponse
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public int Score { get; set; }
+        public string? TeamName { get; set; }
+        public string? PositionName { get; set; }
+        public ICollection<TaskDto> InProcessTasks { get; set; } = new List<TaskDto>();
+        public ICollection<TaskDto> CompletedTasks { get; set; } = new List<TaskDto>();
+    }
 }

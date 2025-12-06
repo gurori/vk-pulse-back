@@ -1,4 +1,6 @@
+// Core/Models/Tasks/TaskResponse.cs
 using Core.Models.Users;
+using System;
 
 namespace Core.Models.Tasks
 {
@@ -11,9 +13,9 @@ namespace Core.Models.Tasks
         public int Score { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public DateTime ActualStartDate { get; set; }
-        public DateTime ActualEndDate { get; set; }
+        public DateTime? ActualStartDate { get; set; }
+        public DateTime? ActualEndDate { get; set; }
         public string? ReceiverId { get; set; }
-        public UserDto? Receiver { get; set; }
+        public UserDto? Receiver { get; set; } // Для отображения информации о получателе
     }
 }

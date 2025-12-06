@@ -1,6 +1,9 @@
+// Server/Controllers/BaseController.cs
 using Core.Exceptions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
+using System.Security.Claims;
+using System;
+using System.Linq;
 
 namespace Server.Controllers
 {
@@ -8,34 +11,19 @@ namespace Server.Controllers
     {
         protected string GetTokenFromHeaders()
         {
-            if (!Request.Headers.TryGetValue("Authorization", out var header))
-                throw new UnauthorizedException();
-
-            var parts = header.ToString().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-            return (
-                parts.Length == 2 && parts[0].Equals("Bearer", StringComparison.OrdinalIgnoreCase)
-            )
-                ? parts[1]
-                : throw new UnauthorizedException();
-        }
-    }
-
-    public sealed class ApiExceptionFilter : IAsyncExceptionFilter
-    {
-        public Task OnExceptionAsync(ExceptionContext context)
-        {
-            if (context.Exception is ApiException apiEx)
+            var authorizationHeader = Request.Headers.Authorization.FirstOrDefault();
+            if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
             {
-                context.Result = new ObjectResult(new { detail = apiEx.Message })
-                {
-                    StatusCode = apiEx.StatusCode,
-                };
-
-                context.ExceptionHandled = true;
+                throw new UnauthorizedException("Authorization token not found or invalid format.");
             }
+            return authorizationHeader.Replace("Bearer ", "");
+        }
 
-            return Task.CompletedTask;
+        protected string GetCurrentUserId()
+        {
+            return User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                   User.FindFirst(Core.Structs.CustomClaims.UserId)?.Value ??
+                   throw new UnauthorizedException("User ID not found in token.");
         }
     }
 }

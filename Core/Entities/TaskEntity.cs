@@ -1,3 +1,5 @@
+using System;
+
 namespace Core.Entities
 {
     public sealed class TaskEntity : BaseEntity
@@ -8,9 +10,10 @@ namespace Core.Entities
         public int Score { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public DateTime ActualStartDate { get; set; }
-        public DateTime ActualEndDate { get; set; }
-        public string? ReceiverId { get; set; }
-        public UserEntity? Receiver { get; set; }
+        public DateTime? ActualStartDate { get; set; }
+        public DateTime? ActualEndDate { get; set; }
+
+        public string ReceiverId { get; set; } = string.Empty;
+        public UserEntity Receiver { get; set; } = default!;
     }
 }

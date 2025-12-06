@@ -1,3 +1,6 @@
+// Core/Models/Tasks/TaskDto.cs
+using System;
+
 namespace Core.Models.Tasks
 {
     public sealed class TaskDto
@@ -9,8 +12,8 @@ namespace Core.Models.Tasks
         public int Score { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public DateTime ActualStartDate { get; set; }
-        public DateTime ActualEndDate { get; set; }
+        public DateTime? ActualStartDate { get; set; }
+        public DateTime? ActualEndDate { get; set; }
         public string? ReceiverId { get; set; }
     }
 }

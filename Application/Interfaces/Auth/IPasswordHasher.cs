@@ -1,3 +1,4 @@
+// Application/Interfaces/Auth/IPasswordHasher.cs
 namespace Application.Interfaces.Auth
 {
     public interface IPasswordHasher
