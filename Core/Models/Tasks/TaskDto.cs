@@ -12,5 +12,6 @@ namespace Core.Models.Tasks
         public DateTime ActualStartDate { get; set; }
         public DateTime ActualEndDate { get; set; }
         public string? ReceiverId { get; set; }
+        public string CreatorId { get; set; } = string.Empty;
     }
 }

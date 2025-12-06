@@ -22,16 +22,15 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<UserEntity>
             .HasForeignKey(u => u.PositionId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Связь User -> CompletedTasks
-        builder
-            .HasMany(u => u.CompletedTasks)
-            .WithOne()
-            .HasForeignKey("CompletedById") // shadow property
-            .OnDelete(DeleteBehavior.SetNull);
-
         // Связь User -> InProcessTasks
         builder
-            .HasMany(u => u.InProcessTasks)
+            .HasMany(u => u.CreatedTasks)
+            .WithOne(t => t.Creator)
+            .HasForeignKey(t => t.CreatorId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder
+            .HasMany(u => u.ReceivedTasks)
             .WithOne(t => t.Receiver)
             .HasForeignKey(t => t.ReceiverId)
             .OnDelete(DeleteBehavior.SetNull);

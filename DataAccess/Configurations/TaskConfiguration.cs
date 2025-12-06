@@ -14,8 +14,14 @@ namespace DataAccess.Configurations
             builder.Property(t => t.Description).HasMaxLength(1000);
 
             builder
+                .HasOne(t => t.Creator)
+                .WithMany(u => u.CreatedTasks)
+                .HasForeignKey(t => t.CreatorId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder
                 .HasOne(t => t.Receiver)
-                .WithMany(u => u.InProcessTasks)
+                .WithMany(u => u.ReceivedTasks)
                 .HasForeignKey(t => t.ReceiverId)
                 .OnDelete(DeleteBehavior.SetNull);
         }

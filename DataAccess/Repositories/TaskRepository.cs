@@ -13,7 +13,7 @@ namespace DataAccess.Repositories
         /// </summary>
         public async Task CreateAsync(string name, string description, int score, DateTime start, DateTime end, string receiverId)
         {
-            var user = await _db.Users.Include(u => u.InProcessTasks).FirstOrDefaultAsync(u => u.Id == receiverId);
+            var user = await _db.Users.Include(u => u.CreatedTasks).FirstOrDefaultAsync(u => u.Id == receiverId);
 
             if (user is null) return;
 
@@ -22,14 +22,14 @@ namespace DataAccess.Repositories
                 Name = name,
                 Description = description,
                 Score = score,
-                StartDate = start,
-                EndDate = end,
-                Receiver = user,
-                ReceiverId = receiverId,
+                StartDate = DateTime.SpecifyKind(start, DateTimeKind.Utc),
+                EndDate = DateTime.SpecifyKind(end, DateTimeKind.Utc),
+                Creator = user,
+                CreatorId = receiverId,
                 IsCompleted = false
             };
 
-            user.InProcessTasks = [..user.InProcessTasks, task];
+            user.CreatedTasks = [..user.CreatedTasks, task];
 
             await _db.Tasks.AddAsync(task);
             await _db.SaveChangesAsync();
@@ -42,21 +42,21 @@ namespace DataAccess.Repositories
         {
             return await _db
                 .Tasks.Where(t => ids.Contains(t.Id))
-                .Include(t => t.Receiver)
+                .Include(t => t.Creator)
                 .ToArrayAsync();
         }
 
         /// <summary>
         /// Пометить задачу как выполненную
         /// </summary>
-        public async Task CompleteAsync(string id)
+        public async Task CompleteAsync(string id, string userId)
         {
             var task = await _db.Tasks.FirstOrDefaultAsync(t => t.Id == id);
 
-            if (task is null)
+            if (task is null || task.IsCompleted)
                 return;
 
-            var user = await _db.Users.FirstOrDefaultAsync(t => t.Id == task.ReceiverId);
+            var user = await _db.Users.FirstOrDefaultAsync(t => t.Id == userId);
 
             if (user is null)
                 return;
@@ -71,19 +71,44 @@ namespace DataAccess.Repositories
 
         public async Task<IEnumerable<TaskEntity>> GetByUserIdAsync(string id)
         {
-            var inProcessTasks = await _db
-                .Users.AsNoTracking()
-                .Where(u => u.Id == id)
-                .Select(u => u.InProcessTasks)
-                .FirstOrDefaultAsync() ?? [];
+            return await _db.Tasks
+                .AsNoTracking()
+                .Include(t => t.Creator)
+                .Where(t => t.CreatorId == id)
+                .ToArrayAsync();
+        }
 
-            var completedTasks = await _db
-                .Users.AsNoTracking()
-                .Where(u => u.Id == id)
-                .Select(u => u.CompletedTasks)
-                .FirstOrDefaultAsync() ?? [];
+        public async Task<IEnumerable<TaskEntity>> GetAllAsync()
+        {
+            return await _db.Tasks
+                .AsNoTracking()
+                .Include(x => x.Creator)
+                .Include(x => x.Receiver)
+                .ToArrayAsync();
+        }
 
-            return [.. completedTasks!, .. inProcessTasks!];
+        public async Task TakeAsync(string id, string userId)
+        {
+            var task = await _db.Tasks
+                .Include(t => t.Receiver)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (task is null || task.Receiver is not null)
+                return;
+
+            var user = await _db.Users
+                .Include(u => u.ReceivedTasks)
+                .Include(u => u.CreatedTasks)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user is null || user.ReceivedTasks.Select(t => t.Id).Contains(id))
+                return;
+
+            task.Receiver = user;
+            task.ActualStartDate = DateTime.UtcNow;
+            user.ReceivedTasks.Add(task);
+
+            await _db.SaveChangesAsync();
         }
     }
 }

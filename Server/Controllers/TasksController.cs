@@ -15,22 +15,35 @@ namespace Server.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(TaskRequest request)
         {
-            await _taskService.CreateAsync(request);
+            string token = GetTokenFromHeaders();
+            string id = await _userService.GetIdFromTokenAsync(token);
+            await _taskService.CreateAsync(request, id);
             return Ok();
         }
 
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            string token = GetTokenFromHeaders();
-            string id = await _userService.GetIdFromTokenAsync(token);
-            return Ok(await _taskService.GetByUserId(id));
+            return Ok(await _taskService.Get());
         }
 
         [HttpPut]
         public async Task<IActionResult> Complete(string id)
         {
-            await _taskService.Complete(id);
+            string token = GetTokenFromHeaders();
+            string userId = await _userService.GetIdFromTokenAsync(token);
+
+            await _taskService.Complete(id, userId);
+            return Ok();
+        }
+
+        [HttpPut("take")]
+        public async Task<IActionResult> Take(string id)
+        {
+            string token = GetTokenFromHeaders();
+            string userId = await _userService.GetIdFromTokenAsync(token);
+            
+            await _taskService.TakeAsync(id, userId);
             return Ok();
         }
     }

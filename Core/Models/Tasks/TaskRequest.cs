@@ -7,6 +7,5 @@ namespace Core.Models.Tasks
         public int Score { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public string ReceiverId { get; set; } = string.Empty;
     }
 }

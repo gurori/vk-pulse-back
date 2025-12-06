@@ -37,8 +37,8 @@ namespace DataAccess.Repositories
         {
             return await _context
                 .Users.AsNoTracking()
-                .Include(x => x.InProcessTasks)
-                .Include(x => x.CompletedTasks)
+                .Include(x => x.CreatedTasks)
+                .Include(x => x.ReceivedTasks)
                 .Include(x => x.Team)
                 .Where(u => u.Email == email)
                 .FirstOrDefaultAsync();
@@ -48,8 +48,8 @@ namespace DataAccess.Repositories
         {
             return await _context
                 .Users.AsNoTracking()
-                .Include(x => x.InProcessTasks)
-                .Include(x => x.CompletedTasks)
+                .Include(x => x.CreatedTasks)
+                .Include(x => x.ReceivedTasks)
                 .Include(x => x.Team)
                 .Where(u => u.Id == id)
                 .FirstOrDefaultAsync();
@@ -59,8 +59,8 @@ namespace DataAccess.Repositories
         {
             var userEntities = await _context
                 .Users.AsNoTracking()
-                .Include(x => x.InProcessTasks)
-                .Include(x => x.CompletedTasks)
+                .Include(x => x.CreatedTasks)
+                .Include(x => x.ReceivedTasks)
                 .Include(x => x.Team)
                 .Where(u => ids.Contains(u.Id))
                 .ToListAsync();

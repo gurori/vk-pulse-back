@@ -10,6 +10,8 @@ namespace Core.Entities
         public DateTime EndDate { get; set; }
         public DateTime ActualStartDate { get; set; }
         public DateTime ActualEndDate { get; set; }
+        public string CreatorId { get; set; } = null!;
+        public UserEntity Creator { get; set; } = null!;
         public string? ReceiverId { get; set; }
         public UserEntity? Receiver { get; set; }
     }

@@ -11,7 +11,7 @@ namespace Core.Entities
         public TeamEntity? Team { get; set; } = null;
         public string? PositionId { get; set; } = null;
         public PositionEntity? Position { get; set; } = null;
-        public ICollection<TaskEntity> CompletedTasks { get; set; } = [];
-        public ICollection<TaskEntity> InProcessTasks { get; set; } = [];
+        public ICollection<TaskEntity> CreatedTasks { get; set; }  = [];
+        public ICollection<TaskEntity> ReceivedTasks { get; set; } = [];
     }
 }

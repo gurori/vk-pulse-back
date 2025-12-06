@@ -11,7 +11,7 @@ namespace Core.Models.Users
         string Role,
         string TeamId,
         TeamDto Team,
-        IEnumerable<TaskDto> CompletedTasks,
-        IEnumerable<TaskDto> InProcessTasks
+        ICollection<TaskDto> CreatedTasks,
+        ICollection<TaskDto> ReceivedTasks
     );
 }
